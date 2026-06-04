@@ -257,10 +257,10 @@ async function fetchAndParseNewIPs(piu) {
 
 function normalizeNodeBase(item) {
     let base = '';
-    if (item.isp) {
-        base = item.isp;
-    } else if (item.name) {
+    if (item.name) {
         base = item.name;
+    } else if (item.isp) {
+        base = item.isp;
     } else if (item.domain) {
         base = `优选域名_${item.domain}`;
     } else {
@@ -269,13 +269,59 @@ function normalizeNodeBase(item) {
     return base.replace(/\s+/g, '_');
 }
 
-function formatNodeName(item, protocol, port, tls) {
-    let name = normalizeNodeBase(item);
-    if (item.colo && item.colo.trim()) {
-        name += `_${item.colo.trim().replace(/\s+/g, '_')}`;
+function shortenNodeBase(base) {
+    const text = (base || '').replace(/\s+/g, '_');
+    const domainLike = /^[a-zA-Z0-9.-]+$/.test(text) && text.includes('.');
+    if (domainLike) {
+        const parts = text.split('.').filter(Boolean);
+        if (parts.length >= 3 && parts[parts.length - 1].length === 2 && parts[parts.length - 2].length <= 3) {
+            return parts.slice(-3).join('.');
+        }
+        if (parts.length >= 2) {
+            return parts.slice(-2).join('.');
+        }
     }
-    const suffix = tls ? 'TLS' : 'WS';
-    return `${name}_${protocol}_${port}_${suffix}`;
+    return text.length > 18 ? `${text.slice(0, 16)}..` : text;
+}
+
+function formatColoName(colo) {
+    const code = (colo || '').trim().toUpperCase();
+    const coloNames = {
+        HKG: '香港',
+        TPE: '台北',
+        NRT: '东京',
+        KIX: '大阪',
+        ICN: '首尔',
+        SIN: '新加坡',
+        BKK: '曼谷',
+        KUL: '吉隆坡',
+        MNL: '马尼拉',
+        LAX: '洛杉矶',
+        SJC: '圣何塞',
+        SEA: '西雅图',
+        IAD: '华盛顿',
+        JFK: '纽约',
+        ORD: '芝加哥',
+        DFW: '达拉斯',
+        LHR: '伦敦',
+        CDG: '巴黎',
+        FRA: '法兰克福',
+        AMS: '阿姆斯特丹'
+    };
+    return coloNames[code] || code;
+}
+
+function formatNodeName(item, protocol, port, tls) {
+    let name = shortenNodeBase(normalizeNodeBase(item));
+    if (item.colo && item.colo.trim()) {
+        const coloName = shortenNodeBase(formatColoName(item.colo));
+        if (coloName && !name.includes(coloName)) {
+            name += `_${coloName}`;
+        }
+    }
+    const protocolName = protocol === 'Trojan' ? 'TJ' : protocol === 'VMess' ? 'VM' : 'VL';
+    const suffix = tls ? 'T' : 'W';
+    return `${name}_${protocolName}_${port}_${suffix}`;
 }
 
 // 生成VLESS链接
