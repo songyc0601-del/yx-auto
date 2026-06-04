@@ -1522,10 +1522,10 @@ function generateHomePage(scuValue) {
             const baseUrl = currentUrl.origin;
             let subscriptionUrl;
             if (batchSets.length) {
-                const setsString = batchSets.map(set => \`${set.domain},\${set.uuid},\${set.customPath || "/"}\`).join("\\n");
-                subscriptionUrl = \`${baseUrl}/batch/sub?sets=\${encodeURIComponent(setsString)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
+                const setsString = batchSets.map(set => set.domain + ',' + set.uuid + ',' + (set.customPath || '/')).join("\\n");
+                subscriptionUrl = \`\${baseUrl}/batch/sub?sets=\${encodeURIComponent(setsString)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
             } else {
-                subscriptionUrl = \`${baseUrl}/${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
+                subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
             }
             
             // 添加GitHub优选URL
