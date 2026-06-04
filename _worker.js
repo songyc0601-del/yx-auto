@@ -1458,7 +1458,7 @@ function generateHomePage(scuValue) {
         }
 
         function parseBatchSets(rawValue) {
-            const lines = rawValue.trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            const lines = rawValue.trim().split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
             if (!lines.length) {
                 return [];
             }
