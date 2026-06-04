@@ -67,6 +67,15 @@ function parseBatchSetLine(line) {
 }
 
 // 从环境变量获取配置
+function getProtocolFlags(url) {
+    const trojanEnabled = url.searchParams.get('et') === 'yes';
+    return {
+        evEnabled: !trojanEnabled,
+        etEnabled: trojanEnabled,
+        vmEnabled: false
+    };
+}
+
 function getConfigValue(key, defaultValue) {
     return defaultValue || '';
 }
@@ -675,6 +684,16 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
         }
     }
 
+    async function addPreferredIPLinks(list) {
+        const namedList = withNodeRegion(list);
+        if (evEnabled) {
+            finalLinks.push(...generateLinksFromNewIPs(namedList, user, nodeDomain, wsPath, echConfig));
+        }
+        if (etEnabled) {
+            finalLinks.push(...await generateTrojanLinksFromSource(namedList, user, nodeDomain, disableNonTLS, wsPath, echConfig));
+        }
+    }
+
     const nativeList = [{
         ip: workerDomain,
         isp: '\u539f\u751f\u5730\u5740',
@@ -719,9 +738,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                         return null;
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
-                        if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(IP列表), user, nodeDomain, wsPath, echConfig));
-                        }
+                        await addPreferredIPLinks(IP列表);
                     }
                 }
             } else if (piu && piu.includes('\n')) {
@@ -757,17 +774,13 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                         return null;
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
-                        if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(IP列表), user, nodeDomain, wsPath, echConfig));
-                        }
+                        await addPreferredIPLinks(IP列表);
                     }
                 }
             } else {
                 const newIPList = await fetchAndParseNewIPs(piu);
                 if (newIPList.length > 0) {
-                    if (evEnabled) {
-                        finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(newIPList), user, nodeDomain, wsPath, echConfig));
-                    }
+                    await addPreferredIPLinks(newIPList);
                 }
             }
         } catch (error) {
@@ -786,7 +799,9 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, epd, 
     const target = url.searchParams.get('target') || 'base64';
     if (finalLinks.length === 0) {
         const errorRemark = "所有节点获取失败";
-        const errorLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`;
+        const errorLink = etEnabled
+            ? `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443?security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`
+            : `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`;
         finalLinks.push(errorLink);
     }
 
@@ -1407,12 +1422,24 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
                 <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义优选IP列表来源URL，留空则使用默认地址</small>
             </div>
             
-            <div class="list-item" style="margin-top: 24px;">
-                <div>
-                    <div class="list-item-label">\u534f\u8bae\uff1aVLESS</div>
-                    <div class="list-item-description">\u4ec5\u751f\u6210 TLS \u8282\u70b9</div>
+            <div class="form-group" style="margin-top: 24px;">
+                <label>\u534f\u8bae\u9009\u62e9</label>
+                <div style="margin-top: 8px;">
+                    <div class="list-item" onclick="toggleSwitch('switchVL')">
+                        <div>
+                            <div class="list-item-label">VLESS</div>
+                            <div class="list-item-description">\u4ec5 TLS</div>
+                        </div>
+                        <div class="switch active" id="switchVL"></div>
+                    </div>
+                    <div class="list-item" onclick="toggleSwitch('switchTJ')">
+                        <div>
+                            <div class="list-item-label">Trojan</div>
+                            <div class="list-item-description">\u4ec5 TLS</div>
+                        </div>
+                        <div class="switch" id="switchTJ"></div>
+                    </div>
                 </div>
-                <div class="switch active"></div>
             </div>
             
             <div class="form-group" style="margin-top: 24px;">
@@ -1494,6 +1521,8 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             switchDomain: true,
             switchIP: true,
             switchGitHub: true,
+            switchVL: true,
+            switchTJ: false,
             switchTLS: true,
             switchECH: false
         };
@@ -1501,6 +1530,17 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
         function toggleSwitch(id) {
             const switchEl = document.getElementById(id);
             const newValue = !switches[id];
+            if (id === 'switchVL' || id === 'switchTJ') {
+                const selectedId = newValue ? id : (id === 'switchVL' ? 'switchTJ' : 'switchVL');
+                ['switchVL', 'switchTJ'].forEach(protocolId => {
+                    switches[protocolId] = protocolId === selectedId;
+                    const protocolEl = document.getElementById(protocolId);
+                    if (protocolEl) {
+                        protocolEl.classList.toggle('active', protocolId === selectedId);
+                    }
+                });
+                return;
+            }
             switches[id] = newValue;
             switchEl.classList.toggle('active');
 
@@ -1650,7 +1690,7 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             if (githubUrl) {
                 subscriptionUrl += \`&piu=\${encodeURIComponent(githubUrl)}\`;
             }
-            subscriptionUrl += '&ev=yes&et=no&mess=no';
+            subscriptionUrl += switches.switchTJ ? '&ev=no&et=yes&mess=no' : '&ev=yes&et=no&mess=no';
             
             if (!ipv4Enabled) subscriptionUrl += '&ipv4=no';
             if (!ipv6Enabled) subscriptionUrl += '&ipv6=no';
@@ -1841,9 +1881,7 @@ export default {
             }
             const sets = rows.map(parseBatchSetLine);
             
-            const evEnabled = true;
-            const etEnabled = false;
-            const vmEnabled = false;
+            const { evEnabled, etEnabled, vmEnabled } = getProtocolFlags(url);
             
             const piu = url.searchParams.get('piu') || defaultIPURL;
             const epd = url.searchParams.get('epd') !== 'no';
@@ -1870,7 +1908,9 @@ export default {
                 }
                 if (finalLinks.length === 0) {
                     const errorRemark = '所有节点获取失败';
-                    finalLinks.push(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`);
+                    finalLinks.push(etEnabled
+                        ? `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443?security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`
+                        : `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`);
                 }
                 const target = url.searchParams.get('target') || 'base64';
                 let subscriptionContent;
@@ -1922,9 +1962,7 @@ export default {
             const piu = url.searchParams.get('piu') || defaultIPURL;
             
             // 协议选择
-            const evEnabled = true;
-            const etEnabled = false;
-            const vmEnabled = false;
+            const { evEnabled, etEnabled, vmEnabled } = getProtocolFlags(url);
             
             // IPv4/IPv6选择
             const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
