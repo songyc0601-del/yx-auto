@@ -1457,6 +1457,20 @@ function generateHomePage(scuValue) {
             }, timeout);
         }
 
+        function copySubscriptionUrl(url, displayName) {
+            const name = displayName || '客户端';
+            if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                alert(name + ' 订阅链接已生成，请手动复制页面中的链接');
+                return;
+            }
+
+            navigator.clipboard.writeText(url).then(() => {
+                alert(name + ' 订阅链接已复制');
+            }).catch(() => {
+                alert(name + ' 订阅链接已生成，请手动复制页面中的链接');
+            });
+        }
+
         function parseBatchSets(rawValue) {
             const lines = rawValue.trim().split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
             if (!lines.length) {
@@ -1570,29 +1584,21 @@ function generateHomePage(scuValue) {
                 urlElement.style.display = 'block';
                 
                 if (clientName === 'V2RAY') {
-                    navigator.clipboard.writeText(finalUrl).then(() => {
-                        alert(displayName + ' 订阅链接已复制');
-                    });
+                    copySubscriptionUrl(finalUrl, displayName);
                 } else if (clientName === 'Shadowrocket') {
                     schemeUrl = 'shadowrocket://add/' + encodeURIComponent(finalUrl);
                     tryOpenApp(schemeUrl, () => {
-                        navigator.clipboard.writeText(finalUrl).then(() => {
-                            alert(displayName + ' 订阅链接已复制');
-                        });
+                        copySubscriptionUrl(finalUrl, displayName);
                     });
                 } else if (clientName === 'V2RAYNG') {
                     schemeUrl = 'v2rayng://install?url=' + encodeURIComponent(finalUrl);
                     tryOpenApp(schemeUrl, () => {
-                        navigator.clipboard.writeText(finalUrl).then(() => {
-                            alert(displayName + ' 订阅链接已复制');
-                        });
+                        copySubscriptionUrl(finalUrl, displayName);
                     });
                 } else if (clientName === 'NEKORAY') {
                     schemeUrl = 'nekoray://install-config?url=' + encodeURIComponent(finalUrl);
                     tryOpenApp(schemeUrl, () => {
-                        navigator.clipboard.writeText(finalUrl).then(() => {
-                            alert(displayName + ' 订阅链接已复制');
-                        });
+                        copySubscriptionUrl(finalUrl, displayName);
                     });
                 }
             } else {
@@ -1627,17 +1633,29 @@ function generateHomePage(scuValue) {
                 
                 if (schemeUrl) {
                     tryOpenApp(schemeUrl, () => {
-                        navigator.clipboard.writeText(finalUrl).then(() => {
-                            alert(displayName + ' 订阅链接已复制');
-                        });
+                        copySubscriptionUrl(finalUrl, displayName);
                     });
                 } else {
-                    navigator.clipboard.writeText(finalUrl).then(() => {
-                        alert(displayName + ' 订阅链接已复制');
-                    });
+                    copySubscriptionUrl(finalUrl, displayName);
                 }
             }
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[onclick^="toggleSwitch"]').forEach(item => {
+                const match = item.getAttribute('onclick').match(/toggleSwitch\\('([^']+)'\\)/);
+                if (!match) return;
+                item.removeAttribute('onclick');
+                item.addEventListener('click', () => toggleSwitch(match[1]));
+            });
+
+            document.querySelectorAll('[onclick^="generateClientLink"]').forEach(button => {
+                const match = button.getAttribute('onclick').match(/generateClientLink\\('([^']+)',\\s*'([^']+)'\\)/);
+                if (!match) return;
+                button.removeAttribute('onclick');
+                button.addEventListener('click', () => generateClientLink(match[1], match[2]));
+            });
+        });
     </script>
 </body>
 </html>`;
