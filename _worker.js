@@ -340,34 +340,71 @@ function compactNodeBase(base) {
     return displayName ? `${displayName}-${source}` : source;
 }
 
+function extractCarrier(text) {
+    const value = text || '';
+    if (value.includes('\u79fb\u52a8')) return '\u79fb\u52a8';
+    if (value.includes('\u8054\u901a')) return '\u8054\u901a';
+    if (value.includes('\u7535\u4fe1')) return '\u7535\u4fe1';
+    return '';
+}
+
+function formatPreferredLocation(item) {
+    if (item.sourceLocation) {
+        return item.sourceLocation;
+    }
+    if (item.colo && item.colo.trim()) {
+        return formatColoName(item.colo);
+    }
+    if (item.name) {
+        const parts = item.name.split('_').filter(Boolean);
+        return parts.length > 1 ? parts.slice(1).join('_') : item.name;
+    }
+    const base = normalizeNodeBase(item);
+    const domain = compactDomain(base);
+    return domain || base;
+}
+
 function formatColoName(colo) {
     const code = (colo || '').trim().toUpperCase();
     const coloNames = {
-        HKG: '香港',
-        TPE: '台北',
-        NRT: '东京',
-        KIX: '大阪',
-        ICN: '首尔',
-        SIN: '新加坡',
-        BKK: '曼谷',
-        KUL: '吉隆坡',
-        MNL: '马尼拉',
-        LAX: '洛杉矶',
-        SJC: '圣何塞',
-        SEA: '西雅图',
-        IAD: '华盛顿',
-        JFK: '纽约',
-        ORD: '芝加哥',
-        DFW: '达拉斯',
-        LHR: '伦敦',
-        CDG: '巴黎',
-        FRA: '法兰克福',
-        AMS: '阿姆斯特丹'
+        HKG: '\u9999\u6e2f',
+        TPE: '\u53f0\u5317',
+        NRT: '\u4e1c\u4eac',
+        KIX: '\u5927\u962a',
+        ICN: '\u9996\u5c14',
+        SIN: '\u65b0\u52a0\u5761',
+        BKK: '\u66fc\u8c37',
+        KUL: '\u5409\u9686\u5761',
+        MNL: '\u9a6c\u5c3c\u62c9',
+        LAX: '\u6d1b\u6749\u77f6',
+        SJC: '\u5723\u4f55\u585e',
+        SEA: '\u897f\u96c5\u56fe',
+        IAD: '\u534e\u76db\u987f',
+        JFK: '\u7ebd\u7ea6',
+        ORD: '\u829d\u52a0\u54e5',
+        DFW: '\u8fbe\u62c9\u65af',
+        LHR: '\u4f26\u6566',
+        CDG: '\u5df4\u9ece',
+        FRA: '\u6cd5\u5170\u514b\u798f',
+        AMS: '\u963f\u59c6\u65af\u7279\u4e39'
     };
     return coloNames[code] || code;
 }
 
 function formatNodeName(item, protocol, port, tls) {
+    if (item.nodeRegion) {
+        const region = truncateLabel(item.nodeRegion, 6);
+        if (item.sourceType === 'native') {
+            return `${region}-\u539f\u751f`;
+        }
+        const carrier = extractCarrier(item.isp || item.name || '') ||
+            item.sourceCarrier ||
+            compactDomain(item.ip || item.name || '') ||
+            '\u4f18\u9009';
+        const location = truncateLabel(formatPreferredLocation(item), 6);
+        return `${region}-${carrier}-${location}`;
+    }
+
     let name = compactNodeBase(normalizeNodeBase(item));
     if (item.colo && item.colo.trim()) {
         const coloName = truncateLabel(formatColoName(item.colo), 4);
@@ -614,6 +651,9 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
     const user = set.uuid;
     const wsPath = set.customPath || '/';
     const displayName = (set.displayName || '').trim();
+    const withNodeRegion = (list, extra = {}) => displayName
+        ? list.map(item => ({ ...item, ...extra, nodeRegion: displayName }))
+        : list.map(item => ({ ...item, ...extra }));
 
     async function addNodesFromList(list) {
         const hasProtocol = evEnabled || etEnabled || vmEnabled;
@@ -634,21 +674,21 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
 
     const nativeList = [{
         ip: workerDomain,
-        isp: '原生地址',
-        name: displayName ? `${displayName}_原生地址` : '原生地址'
+        isp: '\u539f\u751f\u5730\u5740',
+        sourceType: 'native'
     }];
-    await addNodesFromList(nativeList);
+    await addNodesFromList(withNodeRegion(nativeList));
 
     if (epd) {
-        const domainList = directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain }));
-        await addNodesFromList(domainList);
+        const domainList = directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain, sourceLocation: 'CF\u4f18\u9009' }));
+        await addNodesFromList(withNodeRegion(domainList));
     }
 
     if (epi) {
         try {
             const dynamicIPList = await fetchDynamicIPs(ipv4Enabled, ipv6Enabled, ispMobile, ispUnicom, ispTelecom);
             if (dynamicIPList.length > 0) {
-                await addNodesFromList(dynamicIPList);
+                await addNodesFromList(withNodeRegion(dynamicIPList));
             }
         } catch (error) {
             console.error('获取动态IP失败:', error);
@@ -677,7 +717,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
                         if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
+                            finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(IP列表), user, nodeDomain, wsPath, echConfig));
                         }
                     }
                 }
@@ -715,7 +755,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
                         if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
+                            finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(IP列表), user, nodeDomain, wsPath, echConfig));
                         }
                     }
                 }
@@ -723,7 +763,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                 const newIPList = await fetchAndParseNewIPs(piu);
                 if (newIPList.length > 0) {
                     if (evEnabled) {
-                        finalLinks.push(...generateLinksFromNewIPs(newIPList, user, nodeDomain, wsPath, echConfig));
+                        finalLinks.push(...generateLinksFromNewIPs(withNodeRegion(newIPList), user, nodeDomain, wsPath, echConfig));
                     }
                 }
             }
