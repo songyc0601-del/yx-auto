@@ -614,27 +614,30 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
     const user = set.uuid;
     const wsPath = set.customPath || '/';
     const displayName = (set.displayName || '').trim();
-    const withDisplayName = (list) => displayName
-        ? list.map(item => ({ ...item, name: `${displayName}_${normalizeNodeBase(item)}` }))
-        : list;
 
     async function addNodesFromList(list) {
         const hasProtocol = evEnabled || etEnabled || vmEnabled;
         if (!hasProtocol) {
             return;
         }
-        const namedList = withDisplayName(list);
 
         if (evEnabled) {
-            finalLinks.push(...generateLinksFromSource(namedList, user, nodeDomain, disableNonTLS, wsPath, echConfig));
+            finalLinks.push(...generateLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig));
         }
         if (etEnabled) {
-            finalLinks.push(...await generateTrojanLinksFromSource(namedList, user, nodeDomain, disableNonTLS, wsPath, echConfig));
+            finalLinks.push(...await generateTrojanLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig));
         }
         if (vmEnabled) {
-            finalLinks.push(...generateVMessLinksFromSource(namedList, user, nodeDomain, disableNonTLS, wsPath, echConfig));
+            finalLinks.push(...generateVMessLinksFromSource(list, user, nodeDomain, disableNonTLS, wsPath, echConfig));
         }
     }
+
+    const nativeList = [{
+        ip: workerDomain,
+        isp: '原生地址',
+        name: displayName ? `${displayName}_原生地址` : '原生地址'
+    }];
+    await addNodesFromList(nativeList);
 
     if (epd) {
         const domainList = directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain }));
@@ -674,7 +677,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
                         if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(withDisplayName(IP列表), user, nodeDomain, wsPath, echConfig));
+                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
                         }
                     }
                 }
@@ -712,7 +715,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                     }).filter(item => item !== null);
                     if (IP列表.length > 0) {
                         if (evEnabled) {
-                            finalLinks.push(...generateLinksFromNewIPs(withDisplayName(IP列表), user, nodeDomain, wsPath, echConfig));
+                            finalLinks.push(...generateLinksFromNewIPs(IP列表, user, nodeDomain, wsPath, echConfig));
                         }
                     }
                 }
@@ -720,7 +723,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
                 const newIPList = await fetchAndParseNewIPs(piu);
                 if (newIPList.length > 0) {
                     if (evEnabled) {
-                        finalLinks.push(...generateLinksFromNewIPs(withDisplayName(newIPList), user, nodeDomain, wsPath, echConfig));
+                        finalLinks.push(...generateLinksFromNewIPs(newIPList, user, nodeDomain, wsPath, echConfig));
                     }
                 }
             }
