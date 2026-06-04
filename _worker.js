@@ -636,9 +636,6 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
         }
     }
 
-    const nativeList = [{ ip: workerDomain, isp: '原生地址' }];
-    await addNodesFromList(nativeList);
-
     if (epd) {
         const domainList = directDomains.map(d => ({ ip: d.domain, isp: d.name || d.domain }));
         await addNodesFromList(domainList);
@@ -743,7 +740,7 @@ async function handleSubscriptionRequest(request, user, customDomain, piu, epd, 
     const target = url.searchParams.get('target') || 'base64';
     if (finalLinks.length === 0) {
         const errorRemark = "所有节点获取失败";
-        const errorLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`;
+        const errorLink = `vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`;
         finalLinks.push(errorLink);
     }
 
@@ -1827,7 +1824,7 @@ export default {
                 }
                 if (finalLinks.length === 0) {
                     const errorRemark = '所有节点获取失败';
-                    finalLinks.push(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:80?encryption=none&security=none&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`);
+                    finalLinks.push(`vless://00000000-0000-0000-0000-000000000000@127.0.0.1:443?encryption=none&security=tls&sni=error.com&fp=chrome&type=ws&host=error.com&path=%2F#${encodeURIComponent(errorRemark)}`);
                 }
                 const target = url.searchParams.get('target') || 'base64';
                 let subscriptionContent;
