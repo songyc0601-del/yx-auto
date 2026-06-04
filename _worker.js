@@ -402,7 +402,10 @@ function formatNodeName(item, protocol, port, tls) {
             compactDomain(item.ip || item.name || '') ||
             '\u4f18\u9009';
         const location = truncateLabel(formatPreferredLocation(item), 6);
-        return `${region}-${carrier}-${location}`;
+        if (item.sourceLocation === 'CF\u4f18\u9009') {
+            return `${region}-${carrier}-${location}`;
+        }
+        return `${region}-${carrier}-${location}(CF\u4f18\u9009)`;
     }
 
     let name = compactNodeBase(normalizeNodeBase(item));
