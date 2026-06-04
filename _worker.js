@@ -1219,9 +1219,9 @@ function generateHomePage(scuValue) {
             </div>
 
             <div class="form-group">
-                <label>多组域名 / UUID / 路径（可选）</label>
-                <textarea id="batchInput" rows="4" placeholder="每行一组，格式：域名,UUID,路径，例如：\nexample.com,xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,/\nexample2.com,yyyyyyyy-yyyy-yyyy-yyyy-yyyyyyyyyyyy,/v2ray" style="width: 100%; padding: 14px 16px; font-size: 15px; background: rgba(142, 142, 147, 0.12); border: 2px solid transparent; border-radius: 12px; outline: none; transition: all 0.2s ease;"></textarea>
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">填写多组后会合并输出，若填写则忽略上面的单组域名和UUID。</small>
+                <label>多组域名 / UUID或Password / 路径（可选）</label>
+                <textarea id="batchInput" rows="4" placeholder="每行一组，格式：域名,UUID或Password,路径，例如：\nexample.com,xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,/\nexample2.com,u1izq99dwsy055t3,/v2ray" style="width: 100%; padding: 14px 16px; font-size: 15px; background: rgba(142, 142, 147, 0.12); border: 2px solid transparent; border-radius: 12px; outline: none; transition: all 0.2s ease;"></textarea>
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">填写多组后会合并输出，若填写则忽略上面的单组域名和UUID/Password。</small>
             </div>
             
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
@@ -1477,11 +1477,10 @@ function generateHomePage(scuValue) {
                 return [];
             }
             const sets = [];
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             for (const line of lines) {
                 const parts = line.split(',').map(part => part.trim());
                 if (parts.length < 2) {
-                    throw new Error('多组输入格式错误，正确格式：域名,UUID,路径');
+                    throw new Error('多组输入格式错误，正确格式：域名,UUID或Password,路径');
                 }
                 const domain = parts[0];
                 const uuid = parts[1];
@@ -1489,8 +1488,8 @@ function generateHomePage(scuValue) {
                 if (!domain) {
                     throw new Error('多组输入中域名不能为空');
                 }
-                if (!uuid || !uuidRegex.test(uuid)) {
-                    throw new Error('多组输入中UUID格式不正确');
+                if (!uuid) {
+                    throw new Error('多组输入中UUID/Password不能为空');
                 }
                 sets.push({ domain, uuid, customPath });
             }
@@ -1744,7 +1743,13 @@ export default {
             const sets = rows.map(row => {
                 const parts = row.split(',').map(part => part.trim());
                 if (parts.length < 2) {
-                    throw new Error('多组输入格式错误，正确格式：域名,UUID,路径');
+                    throw new Error('多组输入格式错误，正确格式：域名,UUID或Password,路径');
+                }
+                if (!parts[0]) {
+                    throw new Error('多组输入中域名不能为空');
+                }
+                if (!parts[1]) {
+                    throw new Error('多组输入中UUID/Password不能为空');
                 }
                 return {
                     domain: parts[0],
