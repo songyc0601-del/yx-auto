@@ -1539,7 +1539,7 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             const normalized = line.trim().replace(/[\uFF0C|]/g, ',');
             const parts = normalized.includes(',')
                 ? normalized.split(',').map(part => part.trim()).filter(Boolean)
-                : normalized.split(/\s+/).map(part => part.trim()).filter(Boolean);
+                : normalized.split(/\\s+/).map(part => part.trim()).filter(Boolean);
             if (parts.length < 2) {
                 throw new Error('\u591a\u7ec4\u8f93\u5165\u683c\u5f0f\u9519\u8bef\uff0c\u6b63\u786e\u683c\u5f0f\uff1a\u57df\u540d UUID\u6216Password \u8def\u5f84');
             }
@@ -1558,7 +1558,7 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
         }
 
         function parseBatchSets(rawValue) {
-            const lines = rawValue.trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            const lines = rawValue.trim().split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
             return lines.map(parseBatchSetLine);
         }
         
