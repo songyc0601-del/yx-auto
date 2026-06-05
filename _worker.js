@@ -373,6 +373,37 @@ function formatPreferredLocation(item) {
     return domain || base;
 }
 
+function formatNodeRegion(displayName) {
+    const text = displayName || '';
+    const parts = text.split('-').filter(Boolean);
+    return truncateLabel(parts[parts.length - 1] || text, 6);
+}
+
+function formatNodeSource(item) {
+    if (item.sourceType === 'github') {
+        return 'GitHub';
+    }
+    if (item.sourceType === 'native') {
+        return '\u539f\u751f';
+    }
+    return 'CF';
+}
+
+function formatNodeMiddleLocation(item) {
+    if (item.colo && item.colo.trim()) {
+        return truncateLabel(formatColoName(item.colo), 6);
+    }
+    const location = formatPreferredLocation(item);
+    return truncateLabel(location === 'CF\u4f18\u9009' ? '\u4f18\u9009' : location, 6);
+}
+
+function formatNodeTarget(item) {
+    return extractCarrier(item.isp || item.name || '') ||
+        item.sourceCarrier ||
+        ((item.ip || item.name || '').trim()) ||
+        '\u4f18\u9009';
+}
+
 function formatColoName(colo) {
     const code = (colo || '').trim().toUpperCase();
     const coloNames = {
@@ -402,19 +433,14 @@ function formatColoName(colo) {
 
 function formatNodeName(item, protocol, port, tls) {
     if (item.nodeRegion) {
-        const region = truncateLabel(item.nodeRegion, 6);
+        const region = formatNodeRegion(item.nodeRegion);
         if (item.sourceType === 'native') {
             return `${region}-\u539f\u751f`;
         }
-        const carrier = extractCarrier(item.isp || item.name || '') ||
-            item.sourceCarrier ||
-            compactDomain(item.ip || item.name || '') ||
-            '\u4f18\u9009';
-        const location = truncateLabel(formatPreferredLocation(item), 6);
-        if (item.sourceLocation === 'CF\u4f18\u9009') {
-            return `${region}-${carrier}-${location}`;
-        }
-        return `${region}-${carrier}-${location}(CF\u4f18\u9009)`;
+        const target = formatNodeTarget(item);
+        const source = formatNodeSource(item);
+        const location = formatNodeMiddleLocation(item);
+        return `${region}-${target}-${source}-${location}`;
     }
 
     let name = compactNodeBase(normalizeNodeBase(item));
@@ -685,7 +711,7 @@ async function collectLinksForSet(set, url, piu, epd, epi, egi, ipv4Enabled, ipv
     }
 
     async function addPreferredIPLinks(list) {
-        const namedList = withNodeRegion(list);
+        const namedList = withNodeRegion(list, { sourceType: 'github' });
         if (evEnabled) {
             finalLinks.push(...generateLinksFromNewIPs(namedList, user, nodeDomain, wsPath, echConfig));
         }
