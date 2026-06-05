@@ -1689,8 +1689,8 @@ function generateHomePage(scuValue) {
 
         let batchNodeCount = 0;
         const NODE_OPTIONS = [
-            { domain: 'hk1.ccfree.cc.cd', path: '/putongkehu', name: '普通客户-香港' },
-            { domain: 'us1.ccfree.cc.cd', path: '/putongkehu', name: '普通客户-美国' },
+            { domain: 'hk1.ccfree.cc.cd', path: '/putongkehu1', name: '普通客户-香港' },
+            { domain: 'us1.ccfree.cc.cd', path: '/putongkehu1', name: '普通客户-美国' },
             { domain: 'hk.sycvip.top', path: '/ziyongjiedian', name: '自用-香港' },
             { domain: 'us.sycvip.top', path: '/ziyongjiedian', name: '自用-美国' }
         ];
