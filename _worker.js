@@ -1221,6 +1221,65 @@ function generateHomePage(scuValue) {
             background: rgba(0, 122, 255, 0.2);
             border-color: rgba(0, 122, 255, 0.3);
         }
+
+        .batch-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .batch-node {
+            padding: 14px;
+            background: rgba(142, 142, 147, 0.08);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .batch-node-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .batch-node-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .batch-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .batch-field label {
+            font-size: 12px;
+            margin-bottom: 6px;
+        }
+
+        .batch-field input {
+            font-size: 15px;
+            padding: 12px 14px;
+        }
+
+        .batch-action {
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .batch-action.danger {
+            color: #ff3b30;
+            background: rgba(255, 59, 48, 0.1);
+            border-color: rgba(255, 59, 48, 0.18);
+        }
         
         .checkbox-label {
             display: flex;
@@ -1257,6 +1316,10 @@ function generateHomePage(scuValue) {
             .client-btn {
                 font-size: 12px;
                 padding: 10px 12px;
+            }
+
+            .batch-grid {
+                grid-template-columns: 1fr;
             }
             
             .header h1 {
@@ -1349,6 +1412,15 @@ function generateHomePage(scuValue) {
                 border-color: rgba(0, 122, 255, 0.3) !important;
                 color: #5ac8fa !important;
             }
+
+            .batch-node {
+                background: rgba(142, 142, 147, 0.16);
+                border-color: rgba(255, 255, 255, 0.1);
+            }
+
+            .batch-node-title {
+                color: #f5f5f7;
+            }
             
             .footer a {
                 color: #5ac8fa !important;
@@ -1387,12 +1459,10 @@ function generateHomePage(scuValue) {
             </div>
 
             <div class="form-group">
-                <label>多组域名 / UUID或Password / 路径（可选）</label>
-                <textarea id="batchInput" rows="5" placeholder="\u6bcf\u884c\u4e00\u7ec4\uff1a\u57df\u540d UUID\u6216Password \u8def\u5f84 \u5730\u533a\uff08\u8def\u5f84\u548c\u5730\u533a\u53ef\u4e0d\u586b\uff09
-example.com xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \u9999\u6e2f
-example2.com,u1izq99dwsy055t3,/v2ray,\u65e5\u672c
-example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16px; font-size: 15px; background: rgba(142, 142, 147, 0.12); border: 2px solid transparent; border-radius: 12px; outline: none; transition: all 0.2s ease;"></textarea>
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">\u652f\u6301\u7a7a\u683c\u3001Tab\u3001\u9017\u53f7\u3001\u4e2d\u6587\u9017\u53f7\u6216 | \u5206\u9694\uff1b\u7b2c 3 \u5217\u4e0d\u662f / \u5f00\u5934\u65f6\u4f1a\u5f53\u4f5c\u5730\u533a\u540d\u3002</small>
+                <label>多节点表单（可选）</label>
+                <div class="batch-list" id="batchNodeList"></div>
+                <button type="button" class="batch-action" id="addBatchNode" style="margin-top: 12px;">添加节点</button>
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">填写多节点表单后，将生成批量订阅；留空则使用上方单节点表单。</small>
             </div>
             
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
@@ -1420,26 +1490,6 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
                 <label>GitHub优选URL（可选）</label>
                 <input type="text" id="githubUrl" placeholder="留空则使用默认地址" style="font-size: 15px;">
                 <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义优选IP列表来源URL，留空则使用默认地址</small>
-            </div>
-            
-            <div class="form-group" style="margin-top: 24px;">
-                <label>\u534f\u8bae\u9009\u62e9</label>
-                <div style="margin-top: 8px;">
-                    <div class="list-item" onclick="toggleSwitch('switchVL')">
-                        <div>
-                            <div class="list-item-label">VLESS</div>
-                            <div class="list-item-description">\u4ec5 TLS</div>
-                        </div>
-                        <div class="switch active" id="switchVL"></div>
-                    </div>
-                    <div class="list-item" onclick="toggleSwitch('switchTJ')">
-                        <div>
-                            <div class="list-item-label">Trojan</div>
-                            <div class="list-item-description">\u4ec5 TLS</div>
-                        </div>
-                        <div class="switch" id="switchTJ"></div>
-                    </div>
-                </div>
             </div>
             
             <div class="form-group" style="margin-top: 24px;">
@@ -1521,8 +1571,8 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             switchDomain: true,
             switchIP: true,
             switchGitHub: true,
-            switchVL: true,
-            switchTJ: false,
+            switchVL: false,
+            switchTJ: true,
             switchTLS: true,
             switchECH: false
         };
@@ -1618,31 +1668,66 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             });
         }
 
-        function parseBatchSetLine(line) {
-            const normalized = line.trim().replace(/[\uFF0C|]/g, ',');
-            const parts = normalized.includes(',')
-                ? normalized.split(',').map(part => part.trim()).filter(Boolean)
-                : normalized.split(/\\s+/).map(part => part.trim()).filter(Boolean);
-            if (parts.length < 2) {
-                throw new Error('\u591a\u7ec4\u8f93\u5165\u683c\u5f0f\u9519\u8bef\uff0c\u6b63\u786e\u683c\u5f0f\uff1a\u57df\u540d UUID\u6216Password \u8def\u5f84');
-            }
-            const domain = parts[0];
-            const uuid = parts[1];
-            const third = parts[2] || '';
-            const customPath = third && third.startsWith('/') ? third : '/';
-            const displayName = third && !third.startsWith('/') ? third : (parts[3] || '');
-            if (!domain) {
-                throw new Error('\u591a\u7ec4\u8f93\u5165\u4e2d\u57df\u540d\u4e0d\u80fd\u4e3a\u7a7a');
-            }
-            if (!uuid) {
-                throw new Error('\u591a\u7ec4\u8f93\u5165\u4e2dUUID/Password\u4e0d\u80fd\u4e3a\u7a7a');
-            }
-            return { domain, uuid, customPath, displayName };
+        let batchNodeCount = 0;
+
+        function addBatchNode(values) {
+            const list = document.getElementById('batchNodeList');
+            if (!list) return;
+
+            batchNodeCount += 1;
+            const node = document.createElement('div');
+            node.className = 'batch-node';
+            node.innerHTML = \`
+                <div class="batch-node-header">
+                    <div class="batch-node-title">节点 \${batchNodeCount}</div>
+                    <button type="button" class="batch-action danger" data-remove-batch>删除</button>
+                </div>
+                <div class="batch-grid">
+                    <div class="batch-field">
+                        <label>域名</label>
+                        <input type="text" data-batch-domain placeholder="example.com">
+                    </div>
+                    <div class="batch-field">
+                        <label>UUID/Password</label>
+                        <input type="text" data-batch-uuid placeholder="请输入UUID或Password">
+                    </div>
+                    <div class="batch-field">
+                        <label>WebSocket路径</label>
+                        <input type="text" data-batch-path placeholder="/" value="/">
+                    </div>
+                    <div class="batch-field">
+                        <label>节点名称 / 地区</label>
+                        <input type="text" data-batch-name placeholder="例如：香港">
+                    </div>
+                </div>
+            \`;
+            node.querySelector('[data-batch-domain]').value = values?.domain || '';
+            node.querySelector('[data-batch-uuid]').value = values?.uuid || '';
+            node.querySelector('[data-batch-path]').value = values?.customPath || '/';
+            node.querySelector('[data-batch-name]').value = values?.displayName || '';
+            node.querySelector('[data-remove-batch]').addEventListener('click', () => {
+                node.remove();
+            });
+            list.appendChild(node);
         }
 
-        function parseBatchSets(rawValue) {
-            const lines = rawValue.trim().split(/\\r?\\n/).map(line => line.trim()).filter(Boolean);
-            return lines.map(parseBatchSetLine);
+        function getBatchSets() {
+            const nodes = Array.from(document.querySelectorAll('.batch-node'));
+            const sets = [];
+            for (const node of nodes) {
+                const domain = node.querySelector('[data-batch-domain]').value.trim();
+                const uuid = node.querySelector('[data-batch-uuid]').value.trim();
+                const customPath = node.querySelector('[data-batch-path]').value.trim() || '/';
+                const displayName = node.querySelector('[data-batch-name]').value.trim();
+                if (!domain && !uuid && customPath === '/' && !displayName) {
+                    continue;
+                }
+                if (!domain || !uuid) {
+                    throw new Error('多节点表单中每个已填写的节点都需要域名和UUID/Password');
+                }
+                sets.push({ domain, uuid, customPath, displayName });
+            }
+            return sets;
         }
         
         function generateClientLink(clientType, clientName) {
@@ -1650,20 +1735,17 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
             const uuid = document.getElementById('uuid').value.trim();
             const nodeDisplayName = document.getElementById('displayName').value.trim();
             const customPath = document.getElementById('customPath').value.trim() || '/';
-            const batchInput = document.getElementById('batchInput').value.trim();
             
             let batchSets = [];
-            if (batchInput) {
-                try {
-                    batchSets = parseBatchSets(batchInput);
-                } catch (error) {
-                    alert(error.message);
-                    return;
-                }
+            try {
+                batchSets = getBatchSets();
+            } catch (error) {
+                alert(error.message);
+                return;
             }
             
             if (!batchSets.length && (!domain || !uuid)) {
-                alert('请先填写域名和UUID/Password，或使用多组输入');
+                alert('请先填写域名和UUID/Password，或使用多节点表单');
                 return;
             }
             
@@ -1793,6 +1875,12 @@ example3.com | password123 | \u7f8e\u56fd" style="width: 100%; padding: 14px 16p
                 button.removeAttribute('onclick');
                 button.addEventListener('click', () => generateClientLink(match[1], match[2]));
             });
+
+            const addBatchButton = document.getElementById('addBatchNode');
+            if (addBatchButton) {
+                addBatchButton.addEventListener('click', () => addBatchNode());
+                addBatchNode();
+            }
         });
     </script>
 </body>
