@@ -995,6 +995,7 @@ function generateHomePage(scuValue) {
         }
         
         .form-group input,
+        .form-group select,
         .form-group textarea {
             width: 100%;
             padding: 14px 16px;
@@ -1010,6 +1011,7 @@ function generateHomePage(scuValue) {
         }
         
         .form-group input:focus,
+        .form-group select:focus,
         .form-group textarea:focus {
             background: rgba(142, 142, 147, 0.16);
             border-color: #007AFF;
@@ -1250,7 +1252,7 @@ function generateHomePage(scuValue) {
 
         .batch-grid {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: 1fr;
             gap: 12px;
         }
 
@@ -1260,6 +1262,11 @@ function generateHomePage(scuValue) {
         }
 
         .batch-field input {
+            font-size: 15px;
+            padding: 12px 14px;
+        }
+
+        .batch-field select {
             font-size: 15px;
             padding: 12px 14px;
         }
@@ -1358,12 +1365,14 @@ function generateHomePage(scuValue) {
             }
             
             .form-group input,
+            .form-group select,
             .form-group textarea {
                 background: rgba(142, 142, 147, 0.2);
                 color: #f5f5f7;
             }
             
             .form-group input:focus,
+            .form-group select:focus,
             .form-group textarea:focus {
                 background: rgba(142, 142, 147, 0.25);
                 border-color: #5ac8fa;
@@ -1438,31 +1447,15 @@ function generateHomePage(scuValue) {
         
         <div class="card">
             <div class="form-group">
-                <label>域名</label>
-                <input type="text" id="domain" placeholder="请输入您的域名">
-            </div>
-            
-            <div class="form-group">
                 <label>UUID/Password</label>
                 <input type="text" id="uuid" placeholder="请输入UUID或Password">
             </div>
-            
-            <div class="form-group">
-                <label>\u8282\u70b9\u540d\u79f0 / \u5730\u533a\uff08\u53ef\u9009\uff09</label>
-                <input type="text" id="displayName" placeholder="\u4f8b\u5982\uff1a\u9999\u6e2f\u3001\u65e5\u672c\u3001\u7f8e\u56fd">
-            </div>
-            
-            <div class="form-group">
-                <label>WebSocket路径（可选）</label>
-                <input type="text" id="customPath" placeholder="留空则使用默认路径 /" value="/">
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">自定义WebSocket路径，例如：/v2ray 或 /</small>
-            </div>
 
             <div class="form-group">
-                <label>多节点表单（可选）</label>
+                <label>节点配置</label>
                 <div class="batch-list" id="batchNodeList"></div>
                 <button type="button" class="batch-action" id="addBatchNode" style="margin-top: 12px;">添加节点</button>
-                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">填写多节点表单后，将生成批量订阅；留空则使用上方单节点表单。</small>
+                <small style="display: block; margin-top: 6px; color: #86868b; font-size: 13px;">每个节点维护域名、WebSocket路径和节点名称的关系；路径留空默认使用 /。</small>
             </div>
             
             <div class="list-item" onclick="toggleSwitch('switchDomain')">
@@ -1669,12 +1662,26 @@ function generateHomePage(scuValue) {
         }
 
         let batchNodeCount = 0;
+        const NODE_OPTIONS = [
+            { domain: 'hk1.ccfree.cc.cd', path: '/putongkehu', name: '普通客户-香港' },
+            { domain: 'us1.ccfree.cc.cd', path: '/putongkehu', name: '普通客户-美国' },
+            { domain: 'hk.sycvip.top', path: '/ziyongjiedian', name: '自用-香港' },
+            { domain: 'us.sycvip.top', path: '/ziyongjiedian', name: '自用-美国' }
+        ];
+
+        function renderNodeOptions(selectedIndex) {
+            return NODE_OPTIONS.map((option, index) => {
+                const selected = index === selectedIndex ? ' selected' : '';
+                return \`<option value="\${index}"\${selected}>\${option.name}</option>\`;
+            }).join('');
+        }
 
         function addBatchNode(values) {
             const list = document.getElementById('batchNodeList');
             if (!list) return;
 
             batchNodeCount += 1;
+            const selectedIndex = Number.isInteger(values?.index) ? values.index : 0;
             const node = document.createElement('div');
             node.className = 'batch-node';
             node.innerHTML = \`
@@ -1684,68 +1691,56 @@ function generateHomePage(scuValue) {
                 </div>
                 <div class="batch-grid">
                     <div class="batch-field">
-                        <label>域名</label>
-                        <input type="text" data-batch-domain placeholder="example.com">
-                    </div>
-                    <div class="batch-field">
-                        <label>UUID/Password</label>
-                        <input type="text" data-batch-uuid placeholder="请输入UUID或Password">
-                    </div>
-                    <div class="batch-field">
-                        <label>WebSocket路径</label>
-                        <input type="text" data-batch-path placeholder="/" value="/">
-                    </div>
-                    <div class="batch-field">
-                        <label>节点名称 / 地区</label>
-                        <input type="text" data-batch-name placeholder="例如：香港">
+                        <label>节点</label>
+                        <select data-batch-node>
+                            \${renderNodeOptions(selectedIndex)}
+                        </select>
                     </div>
                 </div>
             \`;
-            node.querySelector('[data-batch-domain]').value = values?.domain || '';
-            node.querySelector('[data-batch-uuid]').value = values?.uuid || '';
-            node.querySelector('[data-batch-path]').value = values?.customPath || '/';
-            node.querySelector('[data-batch-name]').value = values?.displayName || '';
             node.querySelector('[data-remove-batch]').addEventListener('click', () => {
                 node.remove();
             });
             list.appendChild(node);
         }
 
-        function getBatchSets() {
+        function getBatchSets(uuid) {
             const nodes = Array.from(document.querySelectorAll('.batch-node'));
             const sets = [];
             for (const node of nodes) {
-                const domain = node.querySelector('[data-batch-domain]').value.trim();
-                const uuid = node.querySelector('[data-batch-uuid]').value.trim();
-                const customPath = node.querySelector('[data-batch-path]').value.trim() || '/';
-                const displayName = node.querySelector('[data-batch-name]').value.trim();
-                if (!domain && !uuid && customPath === '/' && !displayName) {
-                    continue;
+                const select = node.querySelector('[data-batch-node]');
+                const option = NODE_OPTIONS[Number(select.value)];
+                if (!option) {
+                    throw new Error('请选择有效节点');
                 }
-                if (!domain || !uuid) {
-                    throw new Error('多节点表单中每个已填写的节点都需要域名和UUID/Password');
-                }
-                sets.push({ domain, uuid, customPath, displayName });
+                sets.push({
+                    domain: option.domain,
+                    uuid,
+                    customPath: option.path,
+                    displayName: option.name
+                });
             }
             return sets;
         }
         
         function generateClientLink(clientType, clientName) {
-            const domain = document.getElementById('domain').value.trim();
             const uuid = document.getElementById('uuid').value.trim();
-            const nodeDisplayName = document.getElementById('displayName').value.trim();
-            const customPath = document.getElementById('customPath').value.trim() || '/';
+
+            if (!uuid) {
+                alert('请先填写UUID/Password');
+                return;
+            }
             
             let batchSets = [];
             try {
-                batchSets = getBatchSets();
+                batchSets = getBatchSets(uuid);
             } catch (error) {
                 alert(error.message);
                 return;
             }
             
-            if (!batchSets.length && (!domain || !uuid)) {
-                alert('请先填写域名和UUID/Password，或使用多节点表单');
+            if (!batchSets.length) {
+                alert('请至少添加一个节点');
                 return;
             }
             
@@ -1760,13 +1755,8 @@ function generateHomePage(scuValue) {
             const currentUrl = new URL(window.location.href);
             const baseUrl = currentUrl.origin;
             let subscriptionUrl;
-            if (batchSets.length) {
-                const setsString = batchSets.map(set => [set.domain, set.uuid, set.customPath || '/', set.displayName || ''].join(',')).join("\\n");
-                subscriptionUrl = \`\${baseUrl}/batch/sub?sets=\${encodeURIComponent(setsString)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
-            } else {
-                subscriptionUrl = \`\${baseUrl}/\${uuid}/sub?domain=\${encodeURIComponent(domain)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
-                if (nodeDisplayName) subscriptionUrl += \`&name=\${encodeURIComponent(nodeDisplayName)}\`;
-            }
+            const setsString = batchSets.map(set => [set.domain, set.uuid, set.customPath || '/', set.displayName || ''].join(',')).join("\\n");
+            subscriptionUrl = \`\${baseUrl}/batch/sub?sets=\${encodeURIComponent(setsString)}&epd=\${switches.switchDomain ? "yes" : "no"}&epi=\${switches.switchIP ? "yes" : "no"}&egi=\${switches.switchGitHub ? "yes" : "no"}\`;
             
             // 添加GitHub优选URL
             if (githubUrl) {
@@ -1786,11 +1776,6 @@ function generateHomePage(scuValue) {
                 if (dnsVal) subscriptionUrl += \`&customDNS=\${encodeURIComponent(dnsVal)}\`;
                 const domainVal = document.getElementById('customECHDomain') && document.getElementById('customECHDomain').value.trim();
                 if (domainVal) subscriptionUrl += \`&customECHDomain=\${encodeURIComponent(domainVal)}\`;
-            }
-            
-            // 添加自定义路径（仅限单条订阅）
-            if (!batchSets.length && customPath && customPath !== '/') {
-                subscriptionUrl += \`&path=\${encodeURIComponent(customPath)}\`;
             }
             
             let finalUrl = subscriptionUrl;
