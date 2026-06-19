@@ -21,9 +21,9 @@ let customECHDomain = 'cloudflare-ech.com';
 // 优选域名生效列表：仅保留经 test-domains.sh 测试稳定、低延迟的域名。
 // 每隔几天用 test-domains.sh 重测，把不达标的删掉、达标的补进来。
 const directDomains = [
-    { domain: "cloudflare-ip.mofashi.ltd" },
     { domain: "cdn.2020111.xyz" },
-    { domain: "freeyx.cloudflare88.eu.org" }
+    { domain: "freeyx.cloudflare88.eu.org" },
+    { domain: "cloudflare-ip.mofashi.ltd" }
 ];
 
 // 默认优选IP来源URL
