@@ -1984,8 +1984,9 @@ export default {
             
             const piu = url.searchParams.get('piu') || defaultIPURL;
             const epd = url.searchParams.get('epd') !== 'no';
-            const epi = url.searchParams.get('epi') !== 'no';
-            const egi = url.searchParams.get('egi') !== 'no';
+            // 强制关闭动态优选IP与GitHub优选IP，只保留优选域名（忽略URL中的 epi/egi 参数）
+            const epi = false;
+            const egi = false;
             const ipv4Enabled = url.searchParams.get('ipv4') !== 'no';
             const ipv6Enabled = url.searchParams.get('ipv6') !== 'no';
             const ispMobile = url.searchParams.get('ispMobile') !== 'no';
@@ -2056,8 +2057,9 @@ export default {
             
             // 从URL参数获取配置
             const epd = url.searchParams.get('epd') !== 'no';
-            const epi = url.searchParams.get('epi') !== 'no';
-            const egi = url.searchParams.get('egi') !== 'no';
+            // 强制关闭动态优选IP与GitHub优选IP，只保留优选域名（忽略URL中的 epi/egi 参数）
+            const epi = false;
+            const egi = false;
             const piu = url.searchParams.get('piu') || defaultIPURL;
             
             // 协议选择
