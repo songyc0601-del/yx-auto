@@ -55,6 +55,9 @@ if [ "${#winners[@]}" -eq 0 ]; then
     echo "本次无稳定达标域名，保持现有 directDomains 不变，安全退出"
     exit 0
 fi
+
+# 排序固定顺序：相同域名集合生成完全相同的结果，避免顺序抖动导致的无意义提交/重部署
+mapfile -t winners < <(printf '%s\n' "${winners[@]}" | sort)
 echo "稳定达标域名（${#winners[@]} 个）: ${winners[*]}"
 
 # 用 python3 可靠地就地替换 directDomains 代码块（保留其上方注释）
