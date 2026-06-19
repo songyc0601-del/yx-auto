@@ -1,0 +1,13 @@
+# 远程候选域名源（可选）。每行一个 URL，# 开头为注释。
+# test-domains.sh / auto-update-domains.sh 会拉取这些 URL，
+# 自动提取其中“像域名”的条目，合并进候选池，再统一测试筛选。
+#
+# 说明：
+#   - 远程源里的垃圾/失效域名会被测试闸门过滤掉，进不了 directDomains，安全。
+#   - 但“优选域名”没有公认权威的自动源，请填你自己信得过的列表 URL
+#     （例如某个你长期跟踪的 GitHub raw 优选域名清单）。
+#   - 源越大，单次测试越慢（每个不通的域名要等超时）。建议控制在几十个以内。
+#   - 留空则只用本地 domains-candidates.txt，行为和以前一致。
+#
+# 示例（默认注释掉，需自行确认可靠性后再启用）：
+# https://raw.githubusercontent.com/<user>/<repo>/main/preferred-domains.txt

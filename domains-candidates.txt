@@ -1,0 +1,16 @@
+# 优选域名候选池（test-domains.sh / auto-update-domains.sh 共用）
+# 每行一个域名，# 开头为注释。把所有想测的优选域名都放这里：
+# 包括当前在用的、暂时不在用的、新听说的。测试达标的才会进 directDomains。
+# 坏掉的域名留着也无妨——不达标就不会被选中；哪天恢复了会自动重新入选。
+
+cloudflare.182682.xyz
+freeyx.cloudflare88.eu.org
+bestcf.top
+cdn.2020111.xyz
+cf.0sm.com
+cf.090227.xyz
+cf.zhetengsha.eu.org
+cfip.1323123.xyz
+cloudflare-ip.mofashi.ltd
+cf.877771.xyz
+xn--b6gac.eu.org

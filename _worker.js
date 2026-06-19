@@ -18,18 +18,12 @@ let customDNS = 'https://dns.joeyblog.eu.org/joeyblog';
 let customECHDomain = 'cloudflare-ech.com';
 
 // 默认优选域名列表
+// 优选域名生效列表：仅保留经 test-domains.sh 测试稳定、低延迟的域名。
+// 每隔几天用 test-domains.sh 重测，把不达标的删掉、达标的补进来。
 const directDomains = [
-    { name: "cloudflare.182682.xyz", domain: "cloudflare.182682.xyz" },
-    { domain: "freeyx.cloudflare88.eu.org" },
-    { domain: "bestcf.top" },
-    { domain: "cdn.2020111.xyz" },
-    { domain: "cf.0sm.com" },
-    { domain: "cf.090227.xyz" },
-    { domain: "cf.zhetengsha.eu.org" },
-    { domain: "cfip.1323123.xyz" },
     { domain: "cloudflare-ip.mofashi.ltd" },
-    { domain: "cf.877771.xyz" },
-    { domain: "xn--b6gac.eu.org" }
+    { domain: "cdn.2020111.xyz" },
+    { domain: "freeyx.cloudflare88.eu.org" }
 ];
 
 // 默认优选IP来源URL
@@ -873,31 +867,48 @@ function generateClashConfig(links) {
     
     const proxyNames = [];
     links.forEach((link, index) => {
+        const isTrojan = link.startsWith('trojan://');
         const name = decodeURIComponent(link.split('#')[1] || `节点${index + 1}`);
         proxyNames.push(name);
         const server = link.match(/@([^:]+):(\d+)/)?.[1] || '';
         const port = link.match(/@[^:]+:(\d+)/)?.[1] || '443';
-        const uuid = link.match(/vless:\/\/([^@]+)@/)?.[1] || '';
+        const cred = link.match(/^(?:vless|trojan):\/\/([^@]+)@/)?.[1] || '';
         const tls = link.includes('security=tls');
         const path = link.match(/path=([^&#]+)/)?.[1] || '/';
         const host = link.match(/host=([^&#]+)/)?.[1] || '';
         const sni = link.match(/sni=([^&#]+)/)?.[1] || '';
         const echParam = link.match(/[?&]ech=([^&#]+)/)?.[1];
         const echDomain = echParam ? decodeURIComponent(echParam).split('+')[0] : '';
-        
+
         yaml += `  - name: ${name}\n`;
-        yaml += `    type: vless\n`;
-        yaml += `    server: ${server}\n`;
-        yaml += `    port: ${port}\n`;
-        yaml += `    uuid: ${uuid}\n`;
-        yaml += `    tls: ${tls}\n`;
-        yaml += `    network: ws\n`;
-        yaml += `    ws-opts:\n`;
-        yaml += `      path: ${path}\n`;
-        yaml += `      headers:\n`;
-        yaml += `        Host: ${host}\n`;
-        if (sni) {
-            yaml += `    servername: ${sni}\n`;
+        if (isTrojan) {
+            yaml += `    type: trojan\n`;
+            yaml += `    server: ${server}\n`;
+            yaml += `    port: ${port}\n`;
+            yaml += `    password: ${cred}\n`;
+            yaml += `    udp: true\n`;
+            if (sni) {
+                yaml += `    sni: ${sni}\n`;
+            }
+            yaml += `    network: ws\n`;
+            yaml += `    ws-opts:\n`;
+            yaml += `      path: ${path}\n`;
+            yaml += `      headers:\n`;
+            yaml += `        Host: ${host}\n`;
+        } else {
+            yaml += `    type: vless\n`;
+            yaml += `    server: ${server}\n`;
+            yaml += `    port: ${port}\n`;
+            yaml += `    uuid: ${cred}\n`;
+            yaml += `    tls: ${tls}\n`;
+            yaml += `    network: ws\n`;
+            yaml += `    ws-opts:\n`;
+            yaml += `      path: ${path}\n`;
+            yaml += `      headers:\n`;
+            yaml += `        Host: ${host}\n`;
+            if (sni) {
+                yaml += `    servername: ${sni}\n`;
+            }
         }
         if (echDomain) {
             yaml += `    ech-opts:\n`;
@@ -905,11 +916,18 @@ function generateClashConfig(links) {
             yaml += `      query-server-name: ${echDomain}\n`;
         }
     });
-    
+
+    const nameList = proxyNames.map(n => `'${n}'`).join(', ');
     yaml += '\nproxy-groups:\n';
     yaml += '  - name: PROXY\n';
     yaml += '    type: select\n';
-    yaml += `    proxies: [${proxyNames.map(n => `'${n}'`).join(', ')}]\n`;
+    yaml += `    proxies: ['自动选择', ${nameList}]\n`;
+    yaml += '  - name: 自动选择\n';
+    yaml += '    type: url-test\n';
+    yaml += `    proxies: [${nameList}]\n`;
+    yaml += '    url: http://www.gstatic.com/generate_204\n';
+    yaml += '    interval: 300\n';
+    yaml += '    tolerance: 50\n';
     yaml += '\nrules:\n';
     yaml += '  - DOMAIN-SUFFIX,local,DIRECT\n';
     yaml += '  - IP-CIDR,127.0.0.0/8,DIRECT\n';
